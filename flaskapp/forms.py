@@ -1,8 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, DecimalField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, NumberRange, ValidationError
-from flaskapp.models import User
-
+from flaskapp.models import User, Business
 
 class RegistrationForm(FlaskForm):
     username = StringField('Username',
@@ -38,3 +37,8 @@ class RestaurantForm(FlaskForm):
     rating = DecimalField('Leave a rating (0 - 5 stars)', validators=[DataRequired(), NumberRange(min=0.0, max=5.0, message="Your rating must be between 0 and 5")])
     review = TextAreaField('Leave a review of your food')
     submit = SubmitField('Enter')
+
+    def validate_name(self, name):
+        business = Business.query.filter_by(name=name.data).first()
+        if not business:
+            raise ValidationError('That restaurant does not exist in the database :( ')

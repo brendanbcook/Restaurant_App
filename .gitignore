@@ -1,2 +1,5 @@
 data/api_key.txt
 data/notebook.ipynb
+flaskapp/__pycache__/*
+notebook.ipynb
+/flaskapp/__pycache__/*

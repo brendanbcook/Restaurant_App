@@ -1,26 +1,41 @@
-from flask import render_template, url_for, flash, redirect
+from flask import render_template, url_for, flash, redirect, request
 from flaskapp import app, bcrypt, db
 from flaskapp.forms import RegistrationForm, LoginForm, RestaurantForm
-from flaskapp.models import User, Post, Review
+from flaskapp.models import User, Review
+from flaskapp.recommender import make_input, predict
 from flask_login import login_user, current_user, logout_user, login_required
 
 @app.route("/")
 @app.route("/home")
 def home():
-    posts = [{'author': 'Brendan Cook', 'name': review.name, 'dish': review.dish, 'rating': review.rating, 'review': review.review, 'date_posted': review.date_posted} for review in Review.query.all()]
-    return render_template('home.html', posts=posts)
+    if current_user.is_authenticated:
+        query = Review.query.filter_by(user_id=current_user.id).all()
+    else:
+        query = Review.query.all()
+    posts = [{'author': User.query.get(review.user_id).username, 'name': review.name, 'dish': review.dish, 'rating': review.rating, \
+        'review': review.review, 'date_posted': review.date_posted} for review in query]
+    return render_template('home.html', posts=posts, current_user=current_user)
 
 @app.route("/restaurants", methods=['GET', 'POST'])
 def restaurants():
     form = RestaurantForm()
     if form.validate_on_submit():
-        review = Review(name=form.name.data, dish=form.dish.data, rating=form.rating.data, review=form.review.data)
+        review = Review(name=form.name.data, dish=form.dish.data, rating=form.rating.data, review=form.review.data, user_id=current_user.id)
         db.session.add(review)
         db.session.commit()
         flash(f'Review of {form.name.data} has been successfully entered!', 'success')
         return redirect(url_for('restaurants'))
     return render_template('restaurants.html', title='Restaurants', form=form)
 
+@app.route("/recommend", methods=['GET', 'POST'])
+def recommend():
+    user_reviews = Review.query.filter_by(id=current_user.id).all()
+    if user_reviews:
+        model_input = make_input(user_reviews)
+        recommendations = predict(model_input)
+    else:
+        recommendations = []
+    return render_template('recommend.html', title='Recommendations', recommendations=recommendations)
 
 @app.route("/register", methods=['GET', 'POST'])
 def register():

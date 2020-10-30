@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import scipy
+from flaskapp import db
 
 def update_training_data():
     # Convert review_df to training matrix
@@ -41,3 +42,12 @@ def load_training_data():
     names = A['names']
     return train, item_features, names
 
+
+# Populate Business table in database
+def create_business_table():
+    names = pd.read_csv('data/names.csv')
+    for i in range(len(names)):
+        name, category, coord = names.iloc[i, :]
+        business = Business(name=name, coordinates=coord, categories=category)
+        db.session.add(business)
+    db.session.commit()

@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 {% block content %}
-<h1>Latest Reviews</h1>
+<h1>Latest Reviews from user {{ current_user.username }}</h1>
     {% for post in posts %}
         <article class="media content-section">
           <div class="media-body">

@@ -14,22 +14,33 @@ def train_model():
     model.fit(train, epochs=100)
     save_model(model)
 
-# Make a single user test input for the model from list of restaurant names and ratings
-def make_input(restaurant_names, user_ratings):
+# Make a single user test input for the model from list Review objects
+def make_input(reviews):
+    restaurant_names = [review.name for review in reviews]
+    user_ratings = [review.rating for review in reviews]
     train, item_features, names= load_training_data()
     rating_vector = np.zeros(names.shape[0])
     sorted_index = np.searchsorted(names, restaurant_names)
     for i, res_name in enumerate(restaurant_names):
         if names[sorted_index[i]].lower() == res_name.lower():
-            rating_vector[sorted_index[i]] = user_ratings[i]
-def predict(rating_vector, item_indices=None):
+            if rating_vector[sorted_index[i]] == 0:
+                rating_vector[sorted_index[i]] = user_ratings[i]
+            else:
+                rating_vector[sorted_index[i]] += user_ratings[i]
+                rating_vector[sorted_index[i]] /= 2.0
+    return rating_vector
+# Run the recommendation model, return a list of the names of the top k recommended restaurants
+def predict(rating_vector, item_indices=None, k=100):
     model = load_model()
     train, item_features, names = load_training_data()
     if item_indices:
         assert item_indices.shape[0] == names.shape[0]
-        return model.predict(rating_vector, item_indices)
+        prediction = model.predict(rating_vector, item_indices)
     else:
-        return model.predict(rating_vector, np.arange(names.shape[0]))
+        prediction = model.predict(rating_vector, np.arange(names.shape[0]))
+    sorted_indices = np.argsort(prediction)
+    sorted_recommendations = names[sorted_indices]
+    return sorted_recommendations[:k]
 def save_model(model):
     filename = 'data/recommender'
     pickle.dump(model, open(filename, 'wb'))

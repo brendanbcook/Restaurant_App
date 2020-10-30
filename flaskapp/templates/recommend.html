@@ -1,0 +1,11 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1>Your Recommendations</h1>
+    {% for business in recommendations %}
+        <article class="media content-section">
+          <div class="media-body">
+            <h2><a class="article-title" href="#">{{ business }}</a></h2>
+          </div>
+        </article>
+    {% endfor %}
+{% endblock content %}
